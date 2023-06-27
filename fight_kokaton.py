@@ -18,15 +18,15 @@ def check_bound(area: pg.Rect, obj: pg.Rect) -> tuple[bool, bool]:
     if obj.top < area.top or area.bottom < obj.bottom:  # 縦方向のはみ出し判定
         tate = False
     return yoko, tate
-class Bird:
+class Bird: 
     """
     ゲームキャラクター（こうかとん）に関するクラス
     """
     _delta = {  # 押下キーと移動量の辞書
-        pg.K_UP: (0, -1),
-        pg.K_DOWN: (0, +1),
-        pg.K_LEFT: (-1, 0),
-        pg.K_RIGHT: (+1, 0),
+        pg.K_UP: (0, -5),
+        pg.K_DOWN: (0, +5),
+        pg.K_LEFT: (-5, 0),
+        pg.K_RIGHT: (+5, 0),
     }
     def __init__(self, num: int, xy: tuple[int, int]):
         """
