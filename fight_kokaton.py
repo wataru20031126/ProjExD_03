@@ -23,10 +23,10 @@ class Bird:
     ゲームキャラクター（こうかとん）に関するクラス
     """
     _delta = {  # 押下キーと移動量の辞書
-        pg.K_UP: (0, -5),
-        pg.K_DOWN: (0, +5),
-        pg.K_LEFT: (-5, 0),
-        pg.K_RIGHT: (+5, 0),
+        pg.K_UP: (0, -1),
+        pg.K_DOWN: (0, +1),
+        pg.K_LEFT: (-1, 0),
+        pg.K_RIGHT: (+1, 0),
     }
     def __init__(self, num: int, xy: tuple[int, int]):
         """
@@ -149,7 +149,7 @@ def main():
     bird = Bird(3, (900, 400))
     bombs = [Bomb() for _ in range(NUM_OF_BOMBS)]
     explosions = []
-    beam = None
+    beams = []
     score = 0   # 爆弾を破壊した数
     fonto = pg.font.Font(None, 80)
 
@@ -159,10 +159,10 @@ def main():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beam = Beam(bird)
+                beams.append(Beam(bird))
         tmr += 1
         screen.blit(bg_img, [0, 0])
-        
+
         for bomb in bombs:
             bomb.update(screen)
             if bird._rct.colliderect(bomb._rct):
@@ -173,26 +173,39 @@ def main():
                 return
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        if beam is not None: #ビームが存在しているとき
-            beam.update(screen)
-            for i, bomb in enumerate(bombs):
-                if beam._rct.colliderect(bomb._rct):
-                    beam = None
-                    explosions.append(Explosion(bombs[i]))
-                    del bombs[i]
-                    bird.change_img(6, screen)
-                    score += 1
-                    break
+ 
+        # if beams is not None: #ビームが存在しているとき
+        #     for j, bomb in enumerate(bombs):
+        #         if beam._rct.colliderect(bomb._rct):
+        #             beam = None
+        #             explosions.append(Explosion(bombs[j]))
+        #             del bombs[j]
+        #             bird.change_img(6, screen)
+        #             score += 1
+        #             break
 
         for explosion in explosions:
             explosion.update(screen)
 
+        for i, beam in enumerate(beams):
+            beam.update(screen)
+            if beam._rct[0] <= 0 or beam._rct[0] >= 1600 or beam._rct[1] <= 0 or beam._rct[1] >= 900:
+                del beams[i]
+            for j, bomb in enumerate(bombs):
+                if beam._rct.colliderect(bomb._rct):
+                    beam = None
+                    explosions.append(Explosion(bombs[j]))
+                    del bombs[j]
+                    bird.change_img(6, screen)
+                    score += 1
+                    break
+
+        
 
         txt = fonto.render(f"{score}point", True, (255, 255, 255))
         screen.blit(txt, [1300, 800])
         pg.display.update()
-        clock.tick(200)
-
+        clock.tick(100)
 if __name__ == "__main__":
     pg.init()
     main()
