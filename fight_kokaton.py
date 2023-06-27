@@ -41,8 +41,22 @@ class Bird:
             True, 
             False
         )
+        img0 = pg.transform.rotozoom(pg.image.load(f"ex03/fig/{num}.png"), 0, 2.0)    # 右２倍
+        img1 = pg.transform.flip(img0, True, False) # 左２ばい
+        self._imgs = {
+            (5, 0): img1,   # 右
+            (5, -5): pg.transform.rotozoom(img1, 45, 1.0),  # 右上
+            (0, -5): pg.transform.rotozoom(img1, 90, 1.0),  # 上
+            (-5, -5): pg.transform.rotozoom(img0, -45, 1.0),    # 左上
+            (-5, 0): img0,  # 左
+            (-5, 5):pg.transform.rotozoom(img0, 45, 1.0),   # 左下
+            (0, 5): pg.transform.rotozoom(img1, -90, 1.0),  # 下
+            (5, 5): pg.transform.rotozoom(img1, -45, 1.0)   # 右下
+        }
+        self._img = self._imgs[(5, 0)]  #デフォルトっで右
         self._rct = self._img.get_rect()
         self._rct.center = xy
+
     def change_img(self, num: int, screen: pg.Surface):
         """
         こうかとん画像を切り替え，画面に転送する
@@ -57,14 +71,21 @@ class Bird:
         引数1 key_lst：押下キーの真理値リスト
         引数2 screen：画面Surface
         """
+        sum_mv = [0, 0]
         for k, mv in __class__._delta.items():
             if key_lst[k]:
                 self._rct.move_ip(mv)
+                sum_mv[0] += mv[0]  # 横方向合計
+                sum_mv[1] += mv[1]  # 縦方向合計
         if check_bound(screen.get_rect(), self._rct) != (True, True):
             for k, mv in __class__._delta.items():
                 if key_lst[k]:
                     self._rct.move_ip(-mv[0], -mv[1])
+        if not (sum_mv[0] == 0 and sum_mv[1] == 0):
+            self._img = self._imgs[tuple(sum_mv)]    # 押されたキーの合計値
         screen.blit(self._img, self._rct)
+
+
 class Bomb:
     """
     爆弾に関するクラス
@@ -96,15 +117,18 @@ class Bomb:
 class Beam:
     """
     ビームに関するクラス
-    """   
+    """
     def __init__(self, bird: Bird):
-        self._img = pg.image.load(f"ex03/fig/beam.png") # 画像surface
+        self._img = pg.transform.rotozoom(pg.image.load("ex03/fig/beam.png"), 0, 2.0) # 画像surface
         self._rct = self._img.get_rect() # 画像surfaceに対応したrect
-        self._rct.centerx = bird._rct.right # こうかとんの中心1座標+ちょっと右
+        self._rct.left = bird._rct.right 
         self._rct.centery = bird._rct.centery
         self._vx, self._vy = +5, 0
-        
     def update(self, screen: pg.Surface):
+        """
+        ビームを速度self._vyに基づき移動させる
+        引数 screen:画面surface
+        """
         self._rct.move_ip(self._vx, self._vy)
         screen.blit(self._img, self._rct)
 def main():
@@ -126,25 +150,25 @@ def main():
         screen.blit(bg_img, [0, 0])
         
         if bomb is not None:
-            if bird._rct.colliderect(bomb._rct): #爆弾が存在しているとき
+            bomb.update(screen)
+            if bird._rct.colliderect(bomb._rct):
                 # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
                 bird.change_img(8, screen)
                 pg.display.update()
                 time.sleep(1)
                 return
+            bomb.update(screen)
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        bomb.update(screen)
-        if beam is not None:
+        if beam is not None: #ビームが存在しているとき
             beam.update(screen)
-            if beam._rct.colliderect(bomb._rct) and bomb is not None:
+            if bomb is not None and beam._rct.colliderect(bomb._rct):
                 beam = None
                 bomb = None
-                bird.change_img(6,screen)
-                time.sleep(1)
+                bird.change_img(6, screen)
+
         pg.display.update()
         clock.tick(100)
-
 if __name__ == "__main__":
     pg.init()
     main()
